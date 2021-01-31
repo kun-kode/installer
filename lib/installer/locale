@@ -1,0 +1,3 @@
+sudo echo $LANG > /etc/locale.gen
+sudo locale-gen
+sudo echo "LANG=$LANG" > /etc/locale.conf

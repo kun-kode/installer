@@ -1,0 +1,3 @@
+sudo mount $choiceefi /boot/efi
+sudo grub-install --target=x86_64-efi --bootloader-id=grub --efi-directory=/boot/efi
+sudo grub-mkconfig -o /boot/grub/grub.cfg
