@@ -28,11 +28,11 @@ echo "Choose a partition to install"
 read partition
 echo "Now we will format and install Small OS to your computer. Do you wish to process? [Y/N]"
 read choice
-case $choice in
-Y)
 sudo mkfs.ext4 $partition
 sudo mount $partition /mnt
-sudo unsquashfs -f -d /run/archiso/boomnt/arch/x86_64/airootfs.sfs /mnt
+sudo mkdir /run/iso
+sudo mount /run/archiso/bootmnt/arch/x86_64/airootfs.sfs /run/iso -t squashfs -o loop
+cp -r -a /run/iso/. /mnt
 sudo genfstab /mnt >> /mnt/etc/fstab
 read -p "Press any key to move to the next step"
 clear
@@ -69,6 +69,7 @@ N)
 echo "Invalid choice. Aborting..."
 exit
 ;;
+esac
 echo "What locale do you want to use?"
 read LOCALE
 export LANG=$LOCALE
@@ -111,6 +112,7 @@ sudo arch-chroot /mnt /usr/lib/installer/lgrub
 echo "Invalid choice. Aborting"
 exit
 ;;
+esac
 read -p "Press any key to move to next step"
 clear
 echo -e "\e[1;4;32mADDITIONAL THINGS"
@@ -130,6 +132,7 @@ N)
 echo "Invalid choice. Aborting"
 exit
 ;;
+esac
 read -p "Press any key to finsh the installation"
 exit
 N)
