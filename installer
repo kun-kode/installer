@@ -1,0 +1,143 @@
+clear
+echo -e "\e[1;33mWelcome to Small installer
+An minimal installer with command line interface\e[0;39m"
+echo '
+'
+read -p "Press any key to start"
+clear
+echo -e "\e[1;4;31mWarning\e[0m"
+echo "Please remember that you must install carefully and we won't have any responbility to fix or help you fix the problem. Try at your own risk.
+Please see our guide if you didn't read it: "
+read -p "Press any to move to the next step"
+clear 
+echo -e "\e[1;4;32mDISK PARTITIONING\e[0m"
+echo -e "\e[1mFirst, you must create a suitable partition for Small OS\e[0m
+You may need a partition has at least 10GB of free disk space"
+echo "Available disk(s):"
+sudo fdisk -l
+echo "Choose the disk you want to install (must be /dev/sdX) to manually partition"
+read disk
+cfdisk $disk
+read -p "Move to next step"
+clear
+echo -e "\e[1;4;32mmINSTALL SYSTEM\e[1m"
+echo -e "This part is really important. Don't do anything wrong or your data may be destroyed. Choose the partition to install carefully. If you don't sure, use Ctrl-C to cancel the installation\e[0m"
+echo "List of partition(s)"
+sudo lsblk
+echo "Choose a partition to install"
+read partition
+echo "Now we will format and install Small OS to your computer. Do you wish to process? [Y/N]"
+read choice
+case $choice in
+Y)
+sudo mkfs.ext4 $partition
+sudo mount $partition /mnt
+sudo unsquashfs -f -d /run/archiso/boomnt/arch/x86_64/airootfs.sfs /mnt
+sudo genfstab /mnt >> /mnt/etc/fstab
+read -p "Press any key to move to the next step"
+clear
+echo -e "\e[1;4;32mTIMEZONE"
+echo -e "\e[0mDo you want to see available timezones? [Y/N]"
+read choicetimezone
+case $choicetimezone in
+Y)
+terminator --new-tab -e "timedatectl list-timezones"
+N)
+:
+;;
+*)
+echo "Invalid choice. Aborting"
+exit
+;;
+esac
+echo "What timezone do you want to set?"
+read TIMEZONE
+sudo arch-chroot /mnt timedatectl set-timezone $TIMEZONE
+read -p "Press any to move to next step"
+clear 
+echo -e "\e[1;4;32mLANGUAGE"
+echo -e "\e[0mDo you want to see available languages? [Y/N]"
+read choicelocale
+case $choicelocale in
+Y)
+terminator --new-tab -e "cat /etc/locale.gen"
+;;
+N)
+:
+;;
+*)
+echo "Invalid choice. Aborting..."
+exit
+;;
+echo "What locale do you want to use?"
+read LOCALE
+export LANG=$LOCALE
+sudo arch-chroot /mnt /usr/lib/installer/locale
+read -p "Press any key to move to next step"
+clear
+echo -e "\e[1;4;32mHOSTNAME"
+echo "\e[0mWhat name do you want to use for you host? (No special characters, no space)"
+read choicehostname
+export HOSTNAME=$choicehostname
+sudo arch-chroot /mnt /usr/lib/installer/sethost
+read -p "Press any key to move to next step"
+clear
+echo -e "\e[1;4;32mUSER & PASSWORD"
+echo -e "\e[0mCreate your own user (no special characters, no space)"
+read choiceuser
+sudo arch-chroot /mnt useradd -m -G wheel $choiceuser
+echo "Set your user's password"
+sudo passwd $choiceuser
+echo "Set root password"
+sudo passwd root
+read -p "Press any key to move to next step"
+clear
+echo -e "\e[1;4;32mGRUB"
+echo -e "\e[0mIf you want to use UEFI, you must sure your mainboard support UEFI and has a 512 MB partition with FAT32 for UEFI"
+lsblk
+echo -e "What type do you want to use, 1 for UEFI GRUB or 2 for Legacy GRUB?"
+read choicegrub
+case $choicegrub in
+1)
+echo -e "Choose a partition for UEFI boot"
+read choiceefi
+export EFIBOOT=$choiceefi
+sudo arch-chroot /mnt /usr/lib/installer/ugrub
+;;
+2)
+sudo arch-chroot /mnt /usr/lib/installer/lgrub
+;;
+*)
+echo "Invalid choice. Aborting"
+exit
+;;
+read -p "Press any key to move to next step"
+clear
+echo -e "\e[1;4;32mADDITIONAL THINGS"
+echo -e "\e[0mDo you want to install additional apps? (LibreOffice, Xarchiver, VLC, Okular, Flameshot) [Y/N]? We will show you a manager to connect to the network"
+read choiceinstall 
+case $choiceinstall in
+Y)
+cp -r /mnt/etc/pacman.d/mirrorlist /mnt/etc/pacman.d/mirrorlist.bak
+sudo nmtui
+mv /mnt/etc/pacman.d/mirrorlist.bak /mnt/etc/pacman.d/mirrorlist.bak
+sudo arch-chroot /mnt pacman -S libreoffice xarchiver vlc okular flameshot
+;;
+N)
+:
+;;
+*)
+echo "Invalid choice. Aborting"
+exit
+;;
+read -p "Press any key to finsh the installation"
+exit
+N)
+exit
+;;
+*)
+echo "Invalid choice. Aborting setup..."
+exit
+;;
+esac
+
